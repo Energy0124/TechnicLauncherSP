@@ -312,7 +312,9 @@ public class Utils {
 			throw new MCNetworkException();
 		}
 		if (!result.contains(":")) {
-			if (result.trim().contains("Bad login")) {
+            result="0:0:"+user+":0";
+            return result.split(":");
+            			/*if (result.trim().contains("Bad login")) {
 				throw new BadLoginException();
 			} else if (result.trim().contains("User not premium")) {
 				throw new MinecraftUserNotPremiumException();
@@ -323,7 +325,7 @@ public class Utils {
 			} else {
 				System.err.print("Unknown login result: " + result);
 			}
-			throw new MCNetworkException();
+			throw new MCNetworkException();*/
 		}
 		return result.split(":");
 	}

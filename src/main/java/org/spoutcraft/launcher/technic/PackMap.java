@@ -30,12 +30,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.spoutcraft.launcher.Settings;
+import org.spoutcraft.launcher.api.Launcher;
+import org.spoutcraft.launcher.technic.rest.RestAPI;
+import org.spoutcraft.launcher.technic.skin.ModpackSelector;
+
 public class PackMap extends HashMap<String, PackInfo> {
 	private static final long serialVersionUID = 1L;
 
 	private final List<String> byIndex = new ArrayList<String>(0);
 
-	private PackInfo selected = null;
+	private String selected = null;
 	private int selectedIndex = 0;
 
 	public PackInfo select(int index) {
@@ -45,7 +50,7 @@ public class PackMap extends HashMap<String, PackInfo> {
 			info = this.get(name);
 		}
 		if (info != null) {
-			selected = info;
+			selected = name;
 			this.selectedIndex = index;
 		}
 		return info;
@@ -54,14 +59,17 @@ public class PackMap extends HashMap<String, PackInfo> {
 	public PackInfo select(String name) {
 		PackInfo info = get(name);
 		if (info != null) {
-			selected = info;
+			selected = name;
 			this.selectedIndex = byIndex.indexOf(name);
 		}
 		return info;
 	}
 
 	public PackInfo getSelected() {
-		return selected;
+		if (selected == null) {
+			select(0);
+		}
+		return get(selected);
 	}
 
 	public int getIndex() {
@@ -138,5 +146,65 @@ public class PackMap extends HashMap<String, PackInfo> {
 
 	public int getPackIndex(String pack) {
 		return byIndex.indexOf(pack);
+	}
+
+	public void loadPack(String pack) {
+		OfflineInfo offline = new OfflineInfo(pack);
+		add(offline);
+		PackThread thread = new PackThread(this, pack);
+		thread.start();
+	}
+
+	public void initPacks() {
+		String lastPack = Settings.getLastModpack();
+		
+		if (!Settings.getInstalledPacks().contains(lastPack)) {
+			lastPack = ModpackSelector.DEFAULT_PACK;
+		}
+
+		loadDefaults(lastPack);
+
+		for (String pack : Settings.getInstalledPacks()) {
+			// Skip non custom packs
+			if (!Settings.isPackCustom(pack)) {
+				continue;
+			}
+			loadPack(pack);
+			if (pack.equals(lastPack)) {
+				select(pack);
+			}
+		}
+
+		// Add in the add pack button
+		put("addpack", new AddPack());
+	}
+
+	private void loadDefaults(final String lastPack) {
+		for (String pack : Settings.getInstalledPacks()) {
+			// Skip custom packs
+			if (Settings.isPackCustom(pack)) {
+				continue;
+			}
+			OfflineInfo offline = new OfflineInfo(pack);
+			add(offline);
+		}
+
+		Thread thread = new Thread("Default Pack Thread") {
+			@Override
+			public void run() {
+				int index = 0;
+				for (PackInfo pack : RestAPI.getDefaults()) {
+					pack.setRest(RestAPI.getDefault());
+					add(pack);
+					reorder(index, pack.getName());
+					index++;
+					if (pack.getName().equals(lastPack)) {
+						select(pack.getName());
+					}
+				}
+				Launcher.getFrame().getSelector().redraw(false);
+			}
+		};
+		thread.start();
 	}
 }

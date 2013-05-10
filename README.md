@@ -1,4 +1,4 @@
-Technic Launcher
+Technic Launcher SP
 ===================
 
 ## What is The Technic Launcher?

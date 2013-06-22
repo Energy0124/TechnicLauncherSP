@@ -27,19 +27,6 @@
 
 package org.spoutcraft.launcher;
 
-import java.applet.Applet;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.Window;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.util.logging.Level;
-
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
 import org.spoutcraft.launcher.api.Event;
 import org.spoutcraft.launcher.api.Launcher;
 import org.spoutcraft.launcher.entrypoint.SpoutcraftLauncher;
@@ -47,10 +34,21 @@ import org.spoutcraft.launcher.exceptions.CorruptedMinecraftJarException;
 import org.spoutcraft.launcher.exceptions.MinecraftVerifyException;
 import org.spoutcraft.launcher.exceptions.RestfulAPIException;
 import org.spoutcraft.launcher.launch.MinecraftLauncher;
-import org.spoutcraft.launcher.skin.components.LoginFrame;
+import org.spoutcraft.launcher.skin.LoginFrame;
 import org.spoutcraft.launcher.technic.PackInfo;
 import org.spoutcraft.launcher.util.OperatingSystem;
 import org.spoutcraft.launcher.util.Utils;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import java.applet.Applet;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.util.logging.Level;
 
 public class GameLauncher extends JFrame implements WindowListener {
 	private static final long serialVersionUID = 1L;
@@ -76,11 +74,7 @@ public class GameLauncher extends JFrame implements WindowListener {
 			this.setResizable(true);
 		}
 		this.addWindowListener(this);
-		setIconImage(Toolkit.getDefaultToolkit().getImage(LoginFrame.spoutcraftIcon));
-	}
-	
-	public void runGame(String user, String session, String downloadTicket) {
-		runGame(user, session, downloadTicket, null);
+		setIconImage(Toolkit.getDefaultToolkit().getImage(LoginFrame.technicIcon));
 	}
 
 	public void setShouldRun(boolean shouldRun) {
@@ -95,15 +89,12 @@ public class GameLauncher extends JFrame implements WindowListener {
 			Settings.getYAML().save();
 		} catch (RestfulAPIException e1) {
 			e1.printStackTrace();
+			Launcher.getFrame().enableForm();
+			return;
 		}
 
-		if (pack != null) {
-			this.setTitle(pack.getDisplayName());
-			File icon = new File(Utils.getAssetsDirectory(), pack.getName() + File.separator + "icon.png");
-			if (icon.exists()) {
-				this.setIconImage(Toolkit.getDefaultToolkit().createImage(icon.getAbsolutePath()));
-			}
-		}
+		this.setTitle(pack.getDisplayName());
+		this.setIconImage(pack.getIcon());
 
 		if (OperatingSystem.getOS().isMac()) {
 			try {
@@ -116,7 +107,6 @@ public class GameLauncher extends JFrame implements WindowListener {
 			}
 		}
 
-		
 		Dimension size = WindowMode.getModeById(Settings.getWindowModeId()).getDimension(this);
 		if (width != -1 && height != -1) {
 			size = new Dimension(width, height);
@@ -145,8 +135,8 @@ public class GameLauncher extends JFrame implements WindowListener {
 			corruption.printStackTrace();
 		} catch (MinecraftVerifyException verify) {
 			Launcher.getLogger().log(Level.SEVERE, "Minecraft Verification error", verify);
-			Launcher.clearCache();
-			JOptionPane.showMessageDialog(getParent(), "Your Minecraft installation is corrupt, but has been cleaned. \nTry to login again.\n\n If that fails, close and restart the appplication.");
+			Launcher.clearCache(pack);
+			JOptionPane.showMessageDialog(getParent(), "Your Minecraft installation is corrupt, but has been cleaned. \nTry to login again.\n\n If that fails, close and restart the application.");
 			this.setVisible(false);
 			this.dispose();
 			Launcher.getFrame().enableForm();

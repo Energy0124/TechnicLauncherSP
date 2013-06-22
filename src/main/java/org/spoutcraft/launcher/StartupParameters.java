@@ -76,17 +76,8 @@ public final class StartupParameters {
 	@Parameter(names = {"-proxy_password"}, description = "HTTP Proxy Password")
 	private String proxyPassword = null;
 
-	@Parameter(names = {"-nomd5", "-ignoremd5"}, description = "Disables the MD5 checking of required files")
-	private boolean ignoreMD5 = false;
-
-	@Parameter(names = {"-build"}, description = "Uses a specific mod pack build")
-	private int build = -1;
-
 	@Parameter(names = {"-relaunched"}, description = "Used to indicate the process has been relaunched for the property memory arguments")
 	private boolean relaunched = false;
-
-	@Parameter(names = {"-old_launcher"}, description = "Indicates old launcher")
-	private boolean oldLauncher = false;
 
 	@Parameter(names = {"-console"}, description = "Shows the console window")
 	private boolean console = false;
@@ -96,6 +87,12 @@ public final class StartupParameters {
 
 	@Parameter(names = {"-height"}, description = "Sets the height of the minecraft window to be fixed to this.")
 	private int height = -1;
+
+	@Parameter(names = {"-solderpack"}, description = "URL pointing towards the solder pack you want to force add to the launcher.")
+	private String solderPack = null;
+
+	@Parameter(names = {"-solderrest"}, description = "URL point towards the rest api for a solder pack you want to force add to the launcher.")
+	private String solderRest = null;
 
 	public List<String> getParameters() {
 		return parameters;
@@ -130,17 +127,8 @@ public final class StartupParameters {
 		if (proxyPassword != null) {
 			log.info("Proxy Password exists");
 		}
-		if (ignoreMD5) {
-			log.info("No MD5 Mode activated");
-		}
-		if (build != -1) {
-			log.info("Mod pack build selected: " + build);
-		}
 		if (relaunched) {
 			log.info("Relaunched with correct memory");
-		}
-		if (oldLauncher) {
-			log.info("Old Launcher detected");
 		}
 		if (console) {
 			log.info("Console frame enabled");
@@ -150,6 +138,12 @@ public final class StartupParameters {
 		}
 		if (height != -1) {
 			log.info("Minecraft frame height: " + height);
+		}
+		if (solderPack != null) {
+			log.info("Forced solder pack: " + solderPack);
+		}
+		if (solderRest != null) {
+			log.info("Forced solder pack rest: " + solderRest);
 		}
 		log.info("--------- End of Startup Parameters ---------");
 	}
@@ -192,7 +186,7 @@ public final class StartupParameters {
 				commands.add("javaw");
 			} else if (OperatingSystem.getOS().isMac()) {
 				commands.add("java");
-				commands.add("-Xdock:name=Spoutcraft");
+				commands.add("-Xdock:name=\"Technic Launcher\"");
 			} else {
 				commands.add("java");
 			}
@@ -258,13 +252,6 @@ public final class StartupParameters {
 			params.add("-proxy_password");
 			params.add(proxyPassword);
 		}
-		if (ignoreMD5) {
-			params.add("-nomd5");
-		}
-		if (build != -1) {
-			params.add("-build");
-			params.add(Integer.toString(build));
-		}
 		if (console) {
 			params.add("-console");
 		}
@@ -275,6 +262,14 @@ public final class StartupParameters {
 		if (height != -1) {
 			params.add("-height");
 			params.add(Integer.toString(height));
+		}
+		if (solderPack != null) {
+			params.add("-solderpack");
+			params.add(solderPack);
+		}
+		if (solderRest != null) {
+			params.add("-solderrest");
+			params.add(solderRest);
 		}
 		return params;
 	}
@@ -315,20 +310,8 @@ public final class StartupParameters {
 		return debug;
 	}
 
-	public boolean isIgnoreMD5() {
-		return ignoreMD5;
-	}
-
-	public int getSpoutcraftBuild() {
-		return build;
-	}
-
 	public boolean isConsole() {
 		return console;
-	}
-
-	public void setSpoutcraftBuild(int build) {
-		this.build = build;
 	}
 
 	public void setupProxy() {
@@ -362,5 +345,13 @@ public final class StartupParameters {
 
 	public int getHeight() {
 		return height;
+	}
+
+	public String getSolderPack() {
+		return solderPack;
+	}
+
+	public String getSolderRest() {
+		return solderRest;
 	}
 }

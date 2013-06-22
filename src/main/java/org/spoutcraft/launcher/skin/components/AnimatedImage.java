@@ -33,23 +33,13 @@ import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.Timer;
 
-public class AnimatedImage extends JLabel implements ActionListener {
+public abstract class AnimatedImage extends JLabel implements ActionListener {
 	private static final long serialVersionUID = 1;
 
 	private final Timer timer;
-	private final int x;
-	private final int y;
-	private final int distance = 30;
-	private int modX = 0;
-	private boolean xReverse = false;
-	private int modY = 0;
-	private boolean yReverse = false;
-	private int delay = 50;
 
-	public AnimatedImage(int x, int y, Icon image) {
+	public AnimatedImage(Icon image, int delay) {
 		this.setIcon(image);
-		this.x = x;
-		this.y = y;
 		timer = new Timer(delay, this);
 	}
 
@@ -61,42 +51,7 @@ public class AnimatedImage extends JLabel implements ActionListener {
 		}
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if (modX == distance) {
-			xReverse = true;
-		}
-		if (modX == 0) {
-			xReverse = false;
-		}
-		if (modY == distance) {
-			yReverse = true;
-		}
-		if (modY == 0) {
-			yReverse = false;
-		}
-
-		if (xReverse) {
-			modX--;
-		} else {
-			modX++;
-		}
-
-		if (yReverse) {
-			modY--;
-		} else {
-			modY++;
-		}
-
-		int delayChange = 0;
-		if (modX < distance / 2) {
-			delayChange = distance - modX - (distance / 2);
-		} else {
-			delayChange = modX - (distance / 2);
-		}
-		timer.setDelay(delay + (delayChange * 10));
-
-		this.setBounds(x + modX, y + modY, getWidth(), getHeight());
-		this.repaint();
+	public Timer getTimer() {
+		return timer;
 	}
 }

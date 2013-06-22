@@ -54,8 +54,12 @@ import org.spoutcraft.launcher.Proxy;
 import org.spoutcraft.launcher.Settings;
 import org.spoutcraft.launcher.StartupParameters;
 import org.spoutcraft.launcher.api.Launcher;
+import org.spoutcraft.launcher.exceptions.RestfulAPIException;
+import org.spoutcraft.launcher.rest.RestAPI;
 import org.spoutcraft.launcher.skin.ConsoleFrame;
-import org.spoutcraft.launcher.skin.MetroLoginFrame;
+import org.spoutcraft.launcher.skin.SplashScreen;
+import org.spoutcraft.launcher.skin.TechnicLoginFrame;
+import org.spoutcraft.launcher.technic.RestInfo;
 import org.spoutcraft.launcher.technic.skin.ModpackSelector;
 import org.spoutcraft.launcher.util.OperatingSystem;
 import org.spoutcraft.launcher.util.Utils;
@@ -69,6 +73,7 @@ public class SpoutcraftLauncher {
 	protected static RotatingFileHandler handler = null;
 	protected static ConsoleFrame console;
 	private static StartupParameters params;
+
 	public SpoutcraftLauncher() {
 		main(new String[0]);
 	}
@@ -78,7 +83,10 @@ public class SpoutcraftLauncher {
 		final long startupTime = start;
 
 		// Prefer IPv4
-		System.setProperty("java.net.preferIPv4Stack" , "true");
+		System.setProperty("java.net.preferIPv4Stack", "true");
+
+		// Tell forge to download from our mirror instead
+		System.setProperty("fml.core.libraries.mirror", "http://mirror.technicpack.net/Technic/lib/fml/%s");
 
 		params = setupParameters(args);
 
@@ -127,7 +135,7 @@ public class SpoutcraftLauncher {
 		logThread.start();
 
 		// Set up the launcher and load login frame
-		MetroLoginFrame frame = new MetroLoginFrame();
+		TechnicLoginFrame frame = new TechnicLoginFrame();
 		ModpackSelector selector = frame.getSelector();
 
 		new Launcher(updater, new GameLauncher(), frame);
@@ -149,14 +157,32 @@ public class SpoutcraftLauncher {
 		if (!Settings.getInstalledPacks().contains(lastPack)) {
 			lastPack = ModpackSelector.DEFAULT_PACK;
 		}
+		if (params.getSolderPack() != null && params.getSolderRest() != null) {
+			String forcedSolder = params.getSolderPack();
+			String forcedRest = params.getSolderRest();
+
+			RestAPI restAPI = new RestAPI(forcedRest);
+			RestInfo pack = null;
+			try {
+				pack = restAPI.getModpackInfo(forcedSolder);
+			} catch (RestfulAPIException e) {
+				e.printStackTrace();
+			}
+
+			if (pack != null) {
+				pack.init();
+				selector.addPack(pack);
+				lastPack = pack.getName();
+			}
+		}
 		selector.selectPack(lastPack);
-		
+		frame.getNews().loadArticles();
 		
 		frame.updateFaces();
 
 		if (params.hasAccount()) {
 			frame.disableForm();
-			frame.doLogin(params.getUser(), params.getPass());
+			frame.doLogin(params.getUser(), params.getPass(), selector.getSelectedPack());
 		}
 
 		if (params.isDebugMode()) {
@@ -254,7 +280,7 @@ public class SpoutcraftLauncher {
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			@Override
 			public void uncaughtException(Thread t, Throwable e) {
-		    	logger.log(Level.SEVERE, "Unhandled Exception in " + t, e);
+				logger.log(Level.SEVERE, "Unhandled Exception in " + t, e);
 			}
 		});
 
